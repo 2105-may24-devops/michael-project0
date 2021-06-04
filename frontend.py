@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 import recipe
 
+MDDEBUG=False
+
 EXIT_COMMAND="exit"
 CONFIG_REL_PATH="rcpconfig.txt"
 term = Terminal()
@@ -77,6 +79,14 @@ def console_mode():
             interpret_command(imp)
             imp = input(prompt())
 
+COMMAND_DICT={
+    "help":"prints all the available commands",
+    "cd":"change current directory",
+    "ls":"list the contents of the current directory",
+    "pwd":"prints the current directory",
+    "":"change current directory",
+    "cd":"change current directory",
+}
 def interpret_command(cmd:str):
     tokens = tokenizer(cmd)
     root_cmd = next(tokens)
@@ -85,13 +95,14 @@ def interpret_command(cmd:str):
     elif(root_cmd == "ls"):
         #TODO: dumb ls, only does current dir
         # print(os.getcwd())
+        
         for child in cwd_path().iterdir():
             child_type = "D" if child.is_dir() else "F"
             print(f"  {child_type} - {child.name}")
     elif(root_cmd == "pwd"):
         print(os.getcwd())
     elif(root_cmd == "echo"):
-        pass
+        print(" ".join(list(tokens)))
     elif(root_cmd == "help"):
         #TODO: print all commands
         pass
@@ -153,8 +164,9 @@ def main():
     else:
         console_mode()
 
-if __name__ == '__main__':
+if __name__ == '__main__' and not MDDEBUG:
     main()
     print()
-    # tokens = tokenizer("abc def ghi")
-    # next(tokens)
+else:
+    tokens = tokenizer("abc 'def ghi' jkl")
+    
