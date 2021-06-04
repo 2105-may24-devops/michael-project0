@@ -12,16 +12,16 @@ CONFIG_REL_PATH="rcpconfig.txt"
 term = Terminal()
 
 def cwd_path():
+    """Returns a Path object of the current working directory."""
     return Path(os.getcwd())
 
 def init_settings():
+    """Searches for a settings file at `./rcpconfig.txt`
+    Currently does nothing with that file.
+    """
     config_path = cwd_path()/CONFIG_REL_PATH
     if config_path.exists():
         print( f"Found a settings file at {str(config_path)}!" )
-
-def splitter(line:str):
-    #probably deprecateable.
-    return list(tokenizer(line))
 
 def tokenizer(line:str):
     """Generator, returns true upon ending"""
@@ -59,11 +59,13 @@ def tokenizer(line:str):
     return True
 
 def script_mode(script:Path):
+    """Handles scripts being input into the program"""
     with script.open("r") as infile:
         for line in infile:
             interpret_command(line)
 
 def console_mode():
+    """Handles interactive mode"""
     def prompt():
         return f"{term.green}{os.getcwd()} {term.yellow}${term.normal} "
     
@@ -78,6 +80,7 @@ def console_mode():
             imp = input(prompt())
 
 def interpret_command(cmd:str):
+    """Parses and interprets file-explorer mode commands, can enter recipe mode when open command is called"""
     tokens = tokenizer(cmd)
     root_cmd = next(tokens)
     if(root_cmd == "cd"):
@@ -103,6 +106,7 @@ def interpret_command(cmd:str):
         print(f"{term.red}Command not recognized. enter '{term.normal}help{term.red}' to see available commands")
 
 def recipe_mode(rcp_path:Path, args_gen):
+    """handles recipe manipulation commands loop"""
     #not sure if args is needed, will be agenerator
     with rcp_path.open("r") as rcpfile:
         prompt=f"Current Recipe:{term.blue}{rcp_path.name} {term.yellow}$${term.normal}"
@@ -114,6 +118,7 @@ def recipe_mode(rcp_path:Path, args_gen):
                 imp = input(prompt)
 
 def manip_recipe(cmd:str):
+    """handles recipe manipulation, parses commands"""
     #TODO: implement with reflection?
     #no exec()... let's copy kubectl-style commands
     #format is: 
