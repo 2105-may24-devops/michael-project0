@@ -58,7 +58,6 @@ def tokenizer(line:str):
                 state = WHITESPACE
                 yield line[reg0:i]
     yield line[reg0:]
-    return True
 
 def script_mode(script:Path):
     """Handles scripts being input into the program"""
@@ -86,11 +85,13 @@ COMMAND_DICT={
     "cd":"change current directory",
     "ls":"list the contents of the current directory",
     "pwd":"prints the current directory",
-    "":"change current directory",
     "cd":"change current directory",
 }
 def interpret_command(cmd:str):
     """Parses and interprets file-explorer mode commands, can enter recipe mode when open command is called"""
+    if cmd == "":
+        return
+
     tokens = tokenizer(cmd)
     root_cmd = next(tokens)
     if(root_cmd == "cd"):
@@ -130,8 +131,7 @@ def recipe_mode(rcp_path:Path, args_gen):
 
 def manip_recipe(cmd:str):
     """handles recipe manipulation, parses commands"""
-    #TODO: implement with reflection?
-    #no exec()... let's copy kubectl-style commands
+    #let's copy kubectl-style commands
     #format is: 
     tokens = tokenzier(cmd)
     root = next(tokenizer)
@@ -174,5 +174,6 @@ if __name__ == '__main__' and not MDDEBUG:
     main()
     print()
 else:
+    #sandbox mode
     tokens = tokenizer("abc 'def ghi' jkl")
     
