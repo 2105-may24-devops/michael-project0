@@ -146,7 +146,8 @@ def manip_recipe(cmd:str):
 #         open(filepath, 'r') as file:
 #         for line in file:
 #             print(line)
-        
+
+# main function commented just for exercise
 def main():
     """
     env vars (home, mode/state) (local settings file?)
