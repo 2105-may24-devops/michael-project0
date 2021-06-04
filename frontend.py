@@ -119,7 +119,7 @@ def interpret_command(cmd:str):
 
 def recipe_mode(rcp_path:Path, args_gen):
     """handles recipe manipulation commands loop"""
-    #not sure if args is needed, will be agenerator
+    #not sure if args is needed, will be a generator
     with rcp_path.open("r") as rcpfile:
         prompt=f"Current Recipe:{term.blue}{rcp_path.name} {term.yellow}$${term.normal}"
         imp = input(prompt)
