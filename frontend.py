@@ -5,13 +5,18 @@ import os
 import json
 # import pathlib
 from pathlib import Path
-import recipe
+
+from recipe import Recipe
 
 MDDEBUG=False
 
 EXIT_COMMAND="exit"
 CONFIG_REL_PATH="rcpconfig.txt"
 term = Terminal()
+
+my_recipe:Recipe
+rcp_path:Path
+RCPFLAG = False
 
 def cwd_path():
     """Returns a Path object of the current working directory."""
@@ -58,7 +63,6 @@ def tokenizer(line:str):
                 state = WHITESPACE
                 yield line[reg0:i]
     yield line[reg0:]
-    return True
 
 def script_mode(script:Path):
     """Handles scripts being input into the program"""
@@ -67,9 +71,12 @@ def script_mode(script:Path):
             interpret_command(line)
 
 def console_mode():
-    """Handles interactive mode"""
+    """Handles interactive mode loop"""
     def prompt():
-        return f"{term.green}{os.getcwd()} {term.yellow}${term.normal} "
+        if RCPFLAG:
+            return f"Current Recipe:{term.blue}{rcp_path.name} {term.yellow}$${term.normal}"
+        else:
+            return f"{term.green}{os.getcwd()} {term.yellow}${term.normal} "
     
     goon = True
     imp = input(prompt())
@@ -86,19 +93,24 @@ COMMAND_DICT={
     "cd":"change current directory",
     "ls":"list the contents of the current directory",
     "pwd":"prints the current directory",
-    "":"change current directory",
-    "cd":"change current directory",
+    "echo":"miscellaneous output function",
+    "open":"change current directory",
 }
 def interpret_command(cmd:str):
     """Parses and interprets file-explorer mode commands, can enter recipe mode when open command is called"""
+    
+    #allows scripts to access recipe mode commands
+    if RCPFLAG:
+        manip_recipe(cmd)
+        return
+    
     tokens = tokenizer(cmd)
     root_cmd = next(tokens)
     if(root_cmd == "cd"):
         os.chdir(Path(next(tokens)))
     elif(root_cmd == "ls"):
         #TODO: dumb ls, only does current dir
-        # print(os.getcwd())
-        
+        # print(os.getcwd())        
         for child in cwd_path().iterdir():
             child_type = "D" if child.is_dir() else "F"
             print(f"  {child_type} - {child.name}")
@@ -107,28 +119,31 @@ def interpret_command(cmd:str):
     elif(root_cmd == "echo"):
         print(" ".join(list(tokens)))
     elif(root_cmd == "help"):
-        #TODO: print all commands
-        pass
+        arg = next(tokens)
+        if arg in COMMAND_DICT:
+            print(f"\t{arg}\t{COMMAND_DICT[arg]}")
+        else:
+            for cmd_name, helptxt in COMMAND_DICT.items:
+                print(f"\t{cmd_name}\t{helptxt}")
     elif(root_cmd == "open"):
-        rcp_path = cwd_path()/next(tokens)
-        #TODO:not sure if i need more things
-        recipe_mode(rcp_path, tokens)
+        open_recipe(next(token))
     else: 
         print(f"{term.red}Command not recognized. enter '{term.normal}help{term.red}' to see available commands")
 
-def recipe_mode(rcp_path:Path, args_gen):
-    """handles recipe manipulation commands loop"""
-    #not sure if args is needed, will be agenerator
-    with rcp_path.open("r") as rcpfile:
-        prompt=f"Current Recipe:{term.blue}{rcp_path.name} {term.yellow}$${term.normal}"
-        imp = input(prompt)
-        goon = True
-        while goon:
-            goon = manip_recipe(imp)
-            if goon:
-                imp = input(prompt)
+def open_recipe(rcp_path_str:str, name:str=None):
+    """ opens a recipe and sets the appropriate flags in storage"""
+    #name arg is currently unused, would allow for storing multiple recipes, 
+    #which would require a different syntax
+    RCPFLAG = True
+    rcp_path = cwd_path()/rcp_path_str
+    my_recipe = Recipe(rcp_path)
 
-def manip_recipe(cmd:str):
+def close_recipe(name = None):
+    RCPFLAG=False
+    rcp_path=None
+    my_recipe = None #TODO: close/save recipe check?
+
+def manip_recipe(cmd:str, rcp:Recipe = my_recipe):
     """handles recipe manipulation, parses commands"""
     #TODO: implement with reflection?
     #no exec()... let's copy kubectl-style commands
@@ -136,8 +151,9 @@ def manip_recipe(cmd:str):
     tokens = tokenzier(cmd)
     root = next(tokenizer)
     if root == "close":
-        return False
-    
+        my_recipe = None
+        RCPFLAG = False
+        
     return True
 
 # def display_file(filepath):
