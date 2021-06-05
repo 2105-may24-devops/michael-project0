@@ -13,6 +13,8 @@ class Recipe:
     ingredients:dict
     steps:list
 
+    my_filepath = None
+
     #TODO: stores other information, such as #served, author and whatever else.
     metadata:dict
     META_AUTHOR="author"
@@ -26,9 +28,12 @@ class Recipe:
         self.title = ""
         self.ingredients={}
         self.steps=[]
+
         if filepath is not None:
-            self.read_json()
-        
+            self.my_filepath = filepath
+            if filepath.exists():
+                self.read_json(filepath)
+                
     def __str__(self):
         #let's use Markdown
         string_builder = []
@@ -44,7 +49,6 @@ class Recipe:
             string_builder.append(f"  {step_num+1}. step")
         return "\n".join(string_builder)
     
-
     def write_json(self, filepath):
         with open(filepath,"w",) as outfile:
             self_dict = {}
@@ -54,7 +58,6 @@ class Recipe:
             self_dict[self.META_KEY] = self.metadata
             json.dump(self_dict, outfile,indent=4)
         
-
     def read_json(self, filepath):
         """
             Could fail if format is wrong. Handle exceptions elsewhere?
@@ -73,7 +76,70 @@ class Recipe:
         """
         for ingred in self.ingredients.values():
             ingred.scale(factor)
+    
+    #functions for interfacing with the cli.
+    
+    #metadata functions
+    def cli_set_title(self, name:str):
+        self.title = name
+        self.modified=True
+    def cli_set_author(self, name:str):
+        self.metadata[self.META_AUTHOR] = name
+        self.modified=True
+    def cli_set_serves(self, num:int):
+        self.metadata[self.META_SERVES] = num
+        self.modified=True
+    def cli_set_srcurl(self, url:str):
+        self.metadata[self.META_SRCURL] = url
+        self.modified=True
+    def cli_custom_metadata(self, key:str, val:str):
+        self.metadata[key] = val
+        self.modified=True
+    def cli_remove_metadata(self, key:str):
+        if key in self.metadata:
+            del self.metadata[key]
+            self.modified=True
+            return True
+        else:
+            return False
+    def cli_get_metadata_keys(self):
+        return self.metadata.keys()
 
+    #ingredient functions
+    def cli_add_ingredient(self, ingr:str, amount:float, unit:str):
+        self.ingredients[ingr]=IngredientAmount(amount, unit)
+        self.modified=True
+    def cli_rmv_ingredient(self, ingr:str):
+        if ingr in self.ingredients:
+            del self.ingredients[ingr]
+            self.modified=True
+            return True
+        else:
+            return False
+    def cli_scale(self, factor:int):
+        self.scale_ingredients(factor)
+    def cli_to_metric(self, ingr = None):
+        if ingr in self.ingredients:
+            self.ingredients[ingr].convert_metric()
+        else:
+            for ingr in self.ingredients.items():
+                ingr[1].convert_metric()
+        self.modified=True
+    
+    #steps functions
+    def cli_add_step(self, new_step:str, ind = -1):
+        if(ind == -1):
+            self.steps.append(new_step)
+        else:
+            self.steps.insert(ind)
+        self.modified=True
+    def cli_remove_step(self, ind=None):
+        if ind is not None:
+            self.steps.pop(ind)
+        else:
+            self.steps.pop()
+        self.modified=True
+    
 
 class IngredientAmount:
     """
@@ -176,6 +242,12 @@ class IngredientAmount:
             return self.convert_volume(dest_unit, src_unit, amt)
         else:
             return self.convert_mass(dest_unit, src_unit, amt)
+    
+    def convert_metric(self):
+        if self.is_mass_unit():
+            self.convert_mass("g", self.unit, self.amount)
+        elif self.is_volume_unit():
+            self.convert_volume("ml", self.unit, self.amount)
 
 # class RecipeNode:
 #     next_node:RecipeNode
