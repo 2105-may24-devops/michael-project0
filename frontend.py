@@ -31,7 +31,7 @@ def init_settings():
         print( f"Found a settings file at {str(config_path)}!" )
 
 def tokenizer(line:str):
-    """Generator, returns true upon ending"""
+    """Generator, returns None upon ending"""
     WHITESPACE=0
     TOKEN=1
     DQUOTE=2
@@ -63,6 +63,7 @@ def tokenizer(line:str):
                 state = WHITESPACE
                 yield line[reg0:i]
     yield line[reg0:]
+    return None
 
 def script_mode(script:Path):
     """Handles scripts being input into the program"""
@@ -95,10 +96,14 @@ COMMAND_DICT={
     "pwd":"prints the current directory",
     "echo":"miscellaneous output function",
     "open":"change current directory",
+    "exit":"exits the program"
 }
+    
 def interpret_command(cmd:str):
     """Parses and interprets file-explorer mode commands, can enter recipe mode when open command is called"""
-    
+    if cmd == "":
+        return
+
     #allows scripts to access recipe mode commands
     if RCPFLAG:
         manip_recipe(cmd)
@@ -110,7 +115,7 @@ def interpret_command(cmd:str):
         os.chdir(Path(next(tokens)))
     elif(root_cmd == "ls"):
         #TODO: dumb ls, only does current dir
-        # print(os.getcwd())        
+        # print(os.getcwd())
         for child in cwd_path().iterdir():
             child_type = "D" if child.is_dir() else "F"
             print(f"  {child_type} - {child.name}")
@@ -143,17 +148,25 @@ def close_recipe(name = None):
     rcp_path=None
     my_recipe = None #TODO: close/save recipe check?
 
+RCP_COMMANDS={
+    "help":"prints all available commands",
+    "display":"prints all available commands",
+    "close":"closes the recipe mode, returning to file explorer"
+}
 def manip_recipe(cmd:str, rcp:Recipe = my_recipe):
     """handles recipe manipulation, parses commands"""
-    #TODO: implement with reflection?
-    #no exec()... let's copy kubectl-style commands
+    #let's copy kubectl-style commands
     #format is: 
     tokens = tokenzier(cmd)
     root = next(tokenizer)
-    if root == "close":
-        my_recipe = None
-        RCPFLAG = False
-        
+
+    if root == "help":
+        return False
+    elif root == "close":
+        close_recipe()
+    else:
+        print(f"{term.red}Command not recognized. enter '{term.normal}help{term.red}' to see available commands")
+   
     return True
 
 # def display_file(filepath):
@@ -190,5 +203,6 @@ if __name__ == '__main__' and not MDDEBUG:
     main()
     print()
 else:
+    #sandbox mode
     tokens = tokenizer("abc 'def ghi' jkl")
     
