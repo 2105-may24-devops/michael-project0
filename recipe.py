@@ -48,7 +48,7 @@ class Recipe:
         for step_num,  step in enumerate(self.steps):
             string_builder.append(f"  {step_num+1}. step")
         return "\n".join(string_builder)
-    
+
     def write_json(self, filepath):
         with open(filepath,"w",) as outfile:
             self_dict = {}
@@ -109,7 +109,7 @@ class Recipe:
     def cli_add_ingredient(self, ingr:str, amount:float, unit:str):
         self.ingredients[ingr]=IngredientAmount(amount, unit)
         self.modified=True
-    def cli_rmv_ingredient(self, ingr:str):
+    def cli_remove_ingredient(self, ingr:str):
         if ingr in self.ingredients:
             del self.ingredients[ingr]
             self.modified=True
@@ -226,6 +226,12 @@ class IngredientAmount:
         amt = self.amount if amt is None else amt
 
         src_is_vol = self.is_volume_unit(src_unit)
+        src_is_mass = self.is_mass_unit(src_unit)
+
+        if not src_is_mass and not src_is_vol:
+            #unit is not convertible
+            return None
+
         dest_is_vol = self.is_volume_unit(dest_unit)
 
         if src_is_vol != dest_is_vol:
@@ -245,9 +251,16 @@ class IngredientAmount:
     
     def convert_metric(self):
         if self.is_mass_unit():
-            self.convert_mass("g", self.unit, self.amount)
+            amt = self.convert_mass("g", self.unit, self.amount)
+            self.amount = amt
+            self.unit = "g"
         elif self.is_volume_unit():
-            self.convert_volume("ml", self.unit, self.amount)
+            amt = self.convert_volume("ml", self.unit, self.amount)
+            self.amount = amt
+            self.unit = "ml"
+        else:
+            #non-convertible unit
+            return
 
 # class RecipeNode:
 #     next_node:RecipeNode

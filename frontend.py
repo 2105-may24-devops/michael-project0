@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #standard library imports
 from typing import Generator
 import sys
@@ -6,6 +7,7 @@ from pathlib import Path
 
 #module imports
 from recipe import Recipe
+from recipe import IngredientAmount
 
 #handling dependencies
 COLOR_DICT={
@@ -24,15 +26,15 @@ try:
     COLOR_DICT["PROMPT"] = term.yellow
     COLOR_DICT["OS_PATH"] = term.green
     COLOR_DICT["RCP_PATH"] = term.blue
+    COLOR_DICT["ACCENT"] = term.blue
 except ModuleNotFoundError:
     print("blessed not found")
 
 EXIT_COMMAND="exit"
 CONFIG_REL_PATH="rcpconfig.txt"
 
-
-my_recipe:Recipe
-rcp_path:Path
+my_recipe:Recipe=None
+rcp_path:Path=None
 RCPFLAG = False
 
 def cwd_path():
@@ -70,7 +72,7 @@ def tokenizer(line:str):
         elif state == TOKEN:
             if char.isspace():
                 state = WHITESPACE
-                yield line[reg0:i+1]
+                yield line[reg0:i]
         elif state == SQUOTE:
             if char == "'":
                 state = WHITESPACE
@@ -80,7 +82,7 @@ def tokenizer(line:str):
                 state = WHITESPACE
                 yield line[reg0:i]
     yield line[reg0:]
-    return None
+    yield None
 
 def script_mode(script:Path):
     """Handles scripts being input into the program"""
@@ -95,16 +97,14 @@ def console_mode():
             return f"Current Recipe:{COLOR_DICT['RCP_PATH']}{rcp_path.name} {COLOR_DICT['PROMPT']}#{COLOR_DICT['NORM']}"
         else:
             return f"{COLOR_DICT['RCP_PATH']}{os.getcwd()} {COLOR_DICT['PROMPT']}${COLOR_DICT['NORM']} "
-    
+    #whether or not the loop should go on
     goon = True
     imp = input(prompt())
     #default mode is file-exploring mode
     while goon:
-        if imp.startswith(EXIT_COMMAND):
-            goon=False
-        else: 
-            interpret_command(imp)
-            imp = input(prompt())
+            goon=interpret_command(imp)
+            if goon:
+                imp = input(prompt())
 
 COMMAND_DICT={
     "help":"prints all the available commands",
@@ -123,13 +123,27 @@ def interpret_command(cmd:str):
 
     #allows scripts to access recipe mode commands
     if RCPFLAG:
-        manip_recipe(cmd)
+        try:
+            manip_recipe(cmd)
+        except TypeError as e:
+            if e.__cause__ is None:
+                print(f"{COLOR_DICT['WARN']} Expected argument but none was supplied.")
+        except ValueError:
+            print(f"{COLOR_DICT['WARN']} Expected numeric argument but string was given.")
         return
     
     tokens = tokenizer(cmd)
     root_cmd = next(tokens)
+    # print(f"command was: {repr(root_cmd)}")
     if(root_cmd == "cd"):
-        os.chdir(Path(next(tokens)))
+        arg = next(tokens)
+        if arg is not None:
+            cd_path = Path(arg)
+            if not cd_path.exists():
+                print(f"{COLOR_DICT['WARN']} invalid path")
+            os.chdir(cd_path)
+        else:
+            print(f"{COLOR_DICT['WARN']} Arguments expected. No arguments entered.")
     elif(root_cmd == "ls"):
         #TODO: dumb ls, only does current dir
         # print(os.getcwd())
@@ -139,29 +153,40 @@ def interpret_command(cmd:str):
     elif(root_cmd == "pwd"):
         print(os.getcwd())
     elif(root_cmd == "echo"):
-        print(" ".join(list(tokens)))
+        print(" ".join(list(tokens)[:-1]))
     elif(root_cmd == "help"):
         arg = next(tokens)
         if arg in COMMAND_DICT:
             print(f"\t{arg}\t{COMMAND_DICT[arg]}")
         else:
-            for cmd_name, helptxt in COMMAND_DICT.items:
+            for cmd_name, helptxt in COMMAND_DICT.items():
                 print(f"\t{cmd_name}\t{helptxt}")
     elif(root_cmd == "open"):
         open_recipe(next(tokens))
-    else: 
-        print(f"{COLOR_DICT['WARN']}Command not recognized. enter '{COLOR_DICT['NORM']}help{COLOR_DICT['WARN']}' to see available commands")
+    elif(root_cmd == "exit"):
+        print("Bye!")
+        return False
+    else:
+        print("what?") 
+        #print(f"{COLOR_DICT['WARN']}Command not recognized. enter '{COLOR_DICT['NORM']}help{COLOR_DICT['WARN']}' to see available commands")
+    return True
 
 def open_recipe(rcp_path_str:str, name:str=None):
-    """ opens a recipe and sets the appropriate flags in storage"""
+    """ opens a recipe and sets the appropriate flags in storage. 
+    Returns false if file failed to open for some reason.
+    """
     #name arg is currently unused, would allow for storing multiple recipes, 
     #which would require a different syntax
-    RCPFLAG = True
-    rcp_path = cwd_path()/rcp_path_str
-    my_recipe = Recipe(rcp_path)
+    if rcp_path_str is not None:
+        rcp_path = cwd_path()/rcp_path_str
+        RCPFLAG = True
+        my_recipe = Recipe(rcp_path)
+        return True
+    return False
 
 def close_recipe(name = None):
-    if my_recipe.modified:
+    """Closes recipe"""
+    if my_recipe is not None and my_recipe.modified:
         yes = input(f"{COLOR_DICT['WARN']}Your recipe has unsaved changes. Close anyways? (must type '{COLOR_DICT['NORM']}yes{COLOR_DICT['WARN']}')")
         if yes != "yes":
             return
@@ -175,13 +200,12 @@ RCP_COMMANDS={
     "close":"closes the recipe mode, returning to file explorer"
 }
 
-def manip_recipe(cmd:str, rcp:Recipe = my_recipe):
+def manip_recipe(cmd:str):
     """handles recipe manipulation, parses commands"""
     #let's copy kubectl-style commands
     #format is: 
     tokens = tokenzier(cmd)
     root = next(tokenizer)
-
     if root == "help":
         arg = next(tokens)
         if arg in RCP_COMMANDS:
@@ -190,9 +214,86 @@ def manip_recipe(cmd:str, rcp:Recipe = my_recipe):
             for cmd_name, helptxt in RCP_COMMANDS.items:
                 print(f"\t{cmd_name}\t{helptxt}")
     elif root == "display":
-        #TODO: may need to change cursor
+        #TODO: may need to change cursor on terminal
         with term.fullscreen():
-            print(str(rcp))
+            print(str(my_recipe))
+            input("press enter to quit")
+    elif root == "add":
+        what = next(tokens)
+        if what == "step":
+            my_step = " ".join(list(tokens[:-1]))
+            i = len(my_recipe.steps) + 1
+            print(f"{COLOR_DICT['ACCENT']}Added: {COLOR_DICT['NORM']} Step {i}. {my_step}")
+            my_recipe.cli_add_step(my_step)
+        elif what == "ingredient":
+            munit = IngredientAmount.MASS_CONV
+            vunit = IngredientAmount.VOLUME_CONV
+            ingr = next(tokens)
+            amount = float(next(tokens))
+            unit = next(tokens)
+            my_recipe.cli_add_ingredient(ingr, amount, unit)
+            # if status == False and False:
+            #     #not going to be strict about checking units
+            #     print(f"{COLOR_DICT['WARN']}Invalid unit.")
+            #     print("Valid mass units:")
+            #     for mu in munit.keys():
+            #         print(f"\t{mu}")
+            #     print("Valid volume units:")
+            #     for vu in vunit.keys():
+            #         print(f"\t{vu}")
+    elif root == "set":
+        what = next(tokens)
+        if what == "title":
+            name = next(tokens)
+            my_recipe.cli_set_title(name)
+        elif what == "author":
+            name = next(tokens)
+            my_recipe.cli_set_author(name)
+        elif what == "serves":
+            num = int(next(tokens))
+            my_recipe.cli_set_serves(num)
+        elif what == "srcurl":
+            url = next(tokens)
+            my_recipe.cli_set_srcurl(url)
+        elif what == "metadata":
+            key = next(tokens)
+            val = next(tokens)
+            my_recipe.cli_custom_metadata(key, val)
+        else:
+            print(f"{COLOR_DICT['WARN']} invalid set argument.")
+            print(f"Possible arguments for set: ")
+            RECIPE_SET_DICT={
+                "title":"set title of the recipe.\t 1 argument",
+                "author":"set the author of the recipe.\t 1 argument",
+                "serves":"number of people served by the recipe.\t 1 numeric argument",
+                "srcurl":"the source url of the recipe.\t 1 argument",
+                "metadata":"custom metadata.\t 2 arguments, key then value"
+            }
+            for set_cmd, help_txt in RECIPE_SET_DICT.items():
+                print(f"{COLOR_DICT['ACCENT']}{set_cmd}\t{COLOR_DICT['NORM']}{help_txt}")
+    elif root == "remove":
+        what = next(tokens)
+        if what == "metadata":
+            key = next(tokens)
+            my_recipe.cli_remove_metadata(key)
+        elif what == "step":
+            try:
+                num = int(next(tokens)) - 1
+                my_recipe.cli_remove_step(num)
+            except IndexError, TypeError:
+                print(f"{COLOR_DICT['WARN']} Invalid index. There are {len(my_recipe.steps)} steps in the recipe.")
+        elif what == "ingredient":
+            ingr = next(tokens)
+            status = my_recipe.cli_remove_ingredient(ingr)
+            if status == False:
+                print("No matching ingredient found!")
+    elif root == "get":
+        what = next(tokens)
+        if what == "metadata":
+            keys = my_recipe.cli_get_metadata_keys()
+        elif what == "step":
+            num = int(next(tokens))
+            
     elif root == "save":
         target = next(tokens)
         if target is not None:
@@ -202,7 +303,14 @@ def manip_recipe(cmd:str, rcp:Recipe = my_recipe):
     elif root == "close":
         close_recipe()
     else:
-        print(f"{COLOR_DICT['WARN']}Command not recognized. enter '{COLOR_DICT['NORM']}help{COLOR_DICT['WARN']}' to see available commands")
+        if root == "metric":
+            ingr = next(tokens)
+            my_recipe.cli_to_metric(ingr)
+        elif root == "scale":
+            factor = float(next(tokens))
+            my_recipe.cli_scale(factor)
+        else:
+            print(f"{COLOR_DICT['WARN']}Command not recognized. enter '{COLOR_DICT['NORM']}help{COLOR_DICT['WARN']}' to see available commands")
    
     return True
 
@@ -228,3 +336,6 @@ def main():
             pass
     else:
         console_mode()
+
+if __name__ == "__main__":
+    main()
