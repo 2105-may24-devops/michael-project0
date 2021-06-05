@@ -1,18 +1,35 @@
+#standard library imports
 from typing import Generator
-from blessed import Terminal
 import sys
 import os
-import json
-# import pathlib
 from pathlib import Path
 
+#module imports
 from recipe import Recipe
 
-MDDEBUG=False
+#handling dependencies
+COLOR_DICT={
+    "WARN":"",
+    "NORM":"",
+    "PROMPT":"",
+    "OS_PATH":"",
+    "RCP_PATH":""
+}
+
+try:
+    from blessed import Terminal
+    term = Terminal()
+    COLOR_DICT["WARN"] = term.red
+    COLOR_DICT["NORM"] = term.normal
+    COLOR_DICT["PROMPT"] = term.yellow
+    COLOR_DICT["OS_PATH"] = term.green
+    COLOR_DICT["RCP_PATH"] = term.blue
+except ModuleNotFoundError:
+    print("blessed not found")
 
 EXIT_COMMAND="exit"
 CONFIG_REL_PATH="rcpconfig.txt"
-term = Terminal()
+
 
 my_recipe:Recipe
 rcp_path:Path
@@ -75,9 +92,9 @@ def console_mode():
     """Handles interactive mode loop"""
     def prompt():
         if RCPFLAG:
-            return f"Current Recipe:{term.blue}{rcp_path.name} {term.yellow}$${term.normal}"
+            return f"Current Recipe:{COLOR_DICT['RCP_PATH']}{rcp_path.name} {COLOR_DICT['PROMPT']}#{COLOR_DICT['NORM']}"
         else:
-            return f"{term.green}{os.getcwd()} {term.yellow}${term.normal} "
+            return f"{COLOR_DICT['RCP_PATH']}{os.getcwd()} {COLOR_DICT['PROMPT']}${COLOR_DICT['NORM']} "
     
     goon = True
     imp = input(prompt())
@@ -131,9 +148,9 @@ def interpret_command(cmd:str):
             for cmd_name, helptxt in COMMAND_DICT.items:
                 print(f"\t{cmd_name}\t{helptxt}")
     elif(root_cmd == "open"):
-        open_recipe(next(token))
+        open_recipe(next(tokens))
     else: 
-        print(f"{term.red}Command not recognized. enter '{term.normal}help{term.red}' to see available commands")
+        print(f"{COLOR_DICT['WARN']}Command not recognized. enter '{COLOR_DICT['NORM']}help{COLOR_DICT['WARN']}' to see available commands")
 
 def open_recipe(rcp_path_str:str, name:str=None):
     """ opens a recipe and sets the appropriate flags in storage"""
@@ -145,7 +162,7 @@ def open_recipe(rcp_path_str:str, name:str=None):
 
 def close_recipe(name = None):
     if my_recipe.modified:
-        yes = input(f"{term.red}Your recipe has unsaved changes. Close anyways? (must type '{term.normal}yes{term.red}')")
+        yes = input(f"{COLOR_DICT['WARN']}Your recipe has unsaved changes. Close anyways? (must type '{COLOR_DICT['NORM']}yes{COLOR_DICT['WARN']}')")
         if yes != "yes":
             return
     my_recipe = None
@@ -173,7 +190,9 @@ def manip_recipe(cmd:str, rcp:Recipe = my_recipe):
             for cmd_name, helptxt in RCP_COMMANDS.items:
                 print(f"\t{cmd_name}\t{helptxt}")
     elif root == "display":
-        print(str(rcp))
+        #TODO: may need to change cursor
+        with term.fullscreen():
+            print(str(rcp))
     elif root == "save":
         target = next(tokens)
         if target is not None:
@@ -183,16 +202,9 @@ def manip_recipe(cmd:str, rcp:Recipe = my_recipe):
     elif root == "close":
         close_recipe()
     else:
-        print(f"{term.red}Command not recognized. enter '{term.normal}help{term.red}' to see available commands")
+        print(f"{COLOR_DICT['WARN']}Command not recognized. enter '{COLOR_DICT['NORM']}help{COLOR_DICT['WARN']}' to see available commands")
    
     return True
-
-# def display_file(filepath):
-#     term=Terminal()
-#     with term.fullscreen(), \
-#         open(filepath, 'r') as file:
-#         for line in file:
-#             print(line)
 
 # main function commented just for exercise
 def main():
@@ -216,11 +228,3 @@ def main():
             pass
     else:
         console_mode()
-
-if __name__ == '__main__' and not MDDEBUG:
-    main()
-    print()
-else:
-    #sandbox mode
-    tokens = tokenizer("abc 'def ghi' jkl")
-    
