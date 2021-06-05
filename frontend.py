@@ -144,15 +144,20 @@ def open_recipe(rcp_path_str:str, name:str=None):
     my_recipe = Recipe(rcp_path)
 
 def close_recipe(name = None):
+    if my_recipe.modified:
+        yes = input(f"{term.red}Your recipe has unsaved changes. Close anyways? (must type '{term.normal}yes{term.red}')")
+        if yes != "yes":
+            return
+    my_recipe = None
     RCPFLAG=False
     rcp_path=None
-    my_recipe = None #TODO: close/save recipe check?
 
 RCP_COMMANDS={
     "help":"prints all available commands",
     "display":"prints all available commands",
     "close":"closes the recipe mode, returning to file explorer"
 }
+
 def manip_recipe(cmd:str, rcp:Recipe = my_recipe):
     """handles recipe manipulation, parses commands"""
     #let's copy kubectl-style commands
@@ -161,7 +166,20 @@ def manip_recipe(cmd:str, rcp:Recipe = my_recipe):
     root = next(tokenizer)
 
     if root == "help":
-        return False
+        arg = next(tokens)
+        if arg in RCP_COMMANDS:
+            print(f"\t{arg}\t{RCP_COMMANDS[arg]}")
+        else:
+            for cmd_name, helptxt in RCP_COMMANDS.items:
+                print(f"\t{cmd_name}\t{helptxt}")
+    elif root == "display":
+        print(str(rcp))
+    elif root == "save":
+        target = next(tokens)
+        if target is not None:
+            my_recipe.write_json(target)
+        else:
+            my_recipe.write_json(rcp_path)
     elif root == "close":
         close_recipe()
     else:

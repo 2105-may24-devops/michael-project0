@@ -20,6 +20,8 @@ class Recipe:
     META_SRCURL="src_url"
     META_REF="refs"
 
+    modified:bool = False
+
     def __init__(self, filepath=None):
         self.title = ""
         self.ingredients={}
