@@ -1,6 +1,8 @@
 import json
 
 class Recipe:
+    """Data structure to represent the recipe, and contains manipulation recipes
+    """
     TITLE_KEY="title"
     INGR_KEY="ingredients"
     STEP_KEY="steps"
@@ -23,7 +25,7 @@ class Recipe:
         self.ingredients={}
         self.steps=[]
         if filepath is not None:
-            self.read_json
+            self.read_json()
         
     def __str__(self):
         #let's use Markdown

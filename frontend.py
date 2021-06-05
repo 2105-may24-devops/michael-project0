@@ -26,7 +26,7 @@ def init_settings():
         print( f"Found a settings file at {str(config_path)}!" )
 
 def tokenizer(line:str):
-    """Generator, returns true upon ending"""
+    """Generator, returns None upon ending"""
     WHITESPACE=0
     TOKEN=1
     DQUOTE=2
@@ -58,6 +58,7 @@ def tokenizer(line:str):
                 state = WHITESPACE
                 yield line[reg0:i]
     yield line[reg0:]
+    return None
 
 def script_mode(script:Path):
     """Handles scripts being input into the program"""
@@ -86,6 +87,7 @@ COMMAND_DICT={
     "ls":"list the contents of the current directory",
     "pwd":"prints the current directory",
     "cd":"change current directory",
+    "exit":"exits the program"
 }
 def interpret_command(cmd:str):
     """Parses and interprets file-explorer mode commands, can enter recipe mode when open command is called"""
@@ -99,7 +101,6 @@ def interpret_command(cmd:str):
     elif(root_cmd == "ls"):
         #TODO: dumb ls, only does current dir
         # print(os.getcwd())
-        
         for child in cwd_path().iterdir():
             child_type = "D" if child.is_dir() else "F"
             print(f"  {child_type} - {child.name}")
@@ -129,14 +130,23 @@ def recipe_mode(rcp_path:Path, args_gen):
             if goon:
                 imp = input(prompt)
 
+RCP_COMMANDS={
+    "help":"prints all available commands",
+    "display":"prints all available commands",
+    "close":"closes the recipe mode, returning to file explorer"
+}
 def manip_recipe(cmd:str):
     """handles recipe manipulation, parses commands"""
     #let's copy kubectl-style commands
     #format is: 
     tokens = tokenzier(cmd)
     root = next(tokenizer)
-    if root == "close":
+    if root == "help":
         return False
+    elif root == "close":
+        return False
+    else:
+        print(f"{term.red}Command not recognized. enter '{term.normal}help{term.red}' to see available commands")
     
     return True
 
