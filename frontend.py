@@ -104,12 +104,12 @@ class Frontend:
                 return f"{self.COLORS['RCP_PATH']}{os.getcwd()} {self.COLORS['PROMPT']}${self.COLORS['NORM']} "
         #whether or not the loop should go on
         goon = True
-        imp = input(prompt())
+        imp = input(prompt(self))
         #default mode is file-exploring mode
         while goon:
                 goon = self.interpret_command(imp)
                 if goon:
-                    imp = input(prompt())
+                    imp = input(prompt(self))
 
     COMMAND_DICT={
         "help":"prints all the available commands",
@@ -125,18 +125,19 @@ class Frontend:
         """Parses and interprets file-explorer mode commands, can enter recipe mode when open command is called"""
         COLORS = self.COLORS
         if cmd == "":
-            return
+            return True
 
         #allows scripts to access recipe mode commands
         if self.RCPFLAG:
             try:
-                self.manip_recipe(cmd)
-            except TypeError as e:
-                if e.__cause__ is None:
-                    print(f"{COLORS['WARN']} Expected argument but none was supplied.")
+                return self.manip_recipe(cmd)
+            # except TypeError as e:
+            #     if e.__cause__ is None:
+            #         print(f"{COLORS['WARN']} Expected argument but none was supplied.")
+            #     print(str(e.__traceback__), file=sys.stderr)
             except ValueError:
                 print(f"{COLORS['WARN']} Expected numeric argument but string was given.")
-            return
+            
         
         tokens = self.tokenizer(cmd)
         root_cmd = next(tokens)
@@ -169,7 +170,7 @@ class Frontend:
                     print(f"\t{cmd_name}\t{helptxt}")
         elif(root_cmd == "open"):
             self.open_recipe(next(tokens))
-            print(self.RCPFLAG)
+            # print(self.RCPFLAG)
         elif(root_cmd == "exit"):
             print("Bye!")
             return False
@@ -185,10 +186,10 @@ class Frontend:
         #name arg is currently unused, would allow for storing multiple recipes, 
         #which would require a different syntax
         if rcp_path_str is not None:
-            rcp_path = self.cwd_path()/rcp_path_str
-            print(f"Opening {str(rcp_path)}")
-            RCPFLAG = True
-            my_recipe = Recipe(rcp_path)
+            self.rcp_path = self.cwd_path()/rcp_path_str
+            print(f"Opening {str(self.rcp_path)}")
+            self.RCPFLAG = True
+            self.my_recipe = Recipe(self.rcp_path)
             return True
         return False
 
@@ -205,7 +206,14 @@ class Frontend:
 
     RCP_COMMANDS={
         "help":"prints all available commands",
-        "display":"prints all available commands",
+        "add":"add information to the recipe \t(step, recipe)",
+        "get":"get some information about the recipe (metadata [key], step [i])",
+        "set":"changes recipe information. (title, author, serves, srcurl)",
+        "remove":"removes a step",
+        "metric":"converts a recipe's ingredients to metric",
+        "scale":"scales ingredients by a factor",
+        "save":"saves a recipe to given path, or original path if none.",
+        "display":"prints the whole recipe as a Markdown",
         "close":"closes the recipe mode, returning to file explorer"
     }
 
@@ -215,14 +223,14 @@ class Frontend:
         #format is: action target *arguments...
         my_recipe = self.my_recipe
         RCP_COMMANDS = self.RCP_COMMANDS
-        tokens = self.tokenzier(cmd)
+        tokens = self.tokenizer(cmd)
         root = next(tokens)
         if root == "help":
             arg = next(tokens)
             if arg in RCP_COMMANDS:
                 print(f"\t{arg}\t{RCP_COMMANDS[arg]}")
             else:
-                for cmd_name, helptxt in RCP_COMMANDS.items:
+                for cmd_name, helptxt in RCP_COMMANDS.items():
                     print(f"\t{cmd_name}\t{helptxt}")
         elif root == "display":
             #TODO: may need to change cursor on terminal
@@ -235,7 +243,7 @@ class Frontend:
         elif root == "add":
             what = next(tokens)
             if what == "step":
-                my_step = " ".join(list(tokens[:-1]))
+                my_step = " ".join(list(tokens)[:-1])
                 i = len(my_recipe.steps) + 1
                 print(f"{self.COLORS['ACCENT']}Added: {self.COLORS['NORM']} Step {i}. {my_step}")
                 my_recipe.cli_add_step(my_step)
@@ -271,8 +279,10 @@ class Frontend:
                 my_recipe.cli_set_srcurl(url)
             elif what == "metadata":
                 key = next(tokens)
-                val = next(tokens)
-                my_recipe.cli_custom_metadata(key, val)
+                if key is not None:
+                    val = next(tokens)
+                    if val is not None:
+                        my_recipe.cli_custom_metadata(key, val)
             else:
                 print(f"{self.COLORS['WARN']} invalid set argument.")
                 print(f"Possible arguments for set: ")
@@ -305,10 +315,17 @@ class Frontend:
         elif root == "get":
             what = next(tokens)
             if what == "metadata":
+                key = next(tokens)
                 keys = my_recipe.cli_get_metadata_keys()
+                if key is not None and key in keys:
+                    print("  ".join(keys))
+                    print(f"{self.COLORS['ACCENT']} To access any of the keys, type \
+                        '{self.COLORS['NORM']}get metadata [key]'.")
+                else:
+                    print(f"{key} = {my_recipe.cli_get_metadata(key)}")
+                #TODO:
             elif what == "step":
                 num = int(next(tokens))
-                
         elif root == "save":
             target = next(tokens)
             if target is not None:

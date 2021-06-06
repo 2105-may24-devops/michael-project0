@@ -28,6 +28,7 @@ class Recipe:
         self.title = ""
         self.ingredients={}
         self.steps=[]
+        self.metadata={}
 
         if filepath is not None:
             self.my_filepath = filepath
@@ -104,6 +105,11 @@ class Recipe:
             return False
     def cli_get_metadata_keys(self):
         return self.metadata.keys()
+    def cli_get_metadata(self, key):
+        if key in self.metadata:
+            return self.metadata[key]
+        else:
+            return None
 
     #ingredient functions
     def cli_add_ingredient(self, ingr:str, amount:float, unit:str):
