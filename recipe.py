@@ -19,16 +19,19 @@ class Recipe:
     metadata:dict
     META_AUTHOR="author"
     META_SERVES="serves"
-    META_SRCURL="src_url"
+    META_SRCURL="srcurl"
     META_REF="refs"
 
     modified:bool = False
 
     def __init__(self, filepath=None):
-        self.title = ""
+        self.title = "Untitled Recipe"
         self.ingredients={}
         self.steps=[]
-        self.metadata={}
+        self.metadata={
+            self.META_AUTHOR : "Unknown",
+            self.META_SERVES : 0
+        }
 
         if filepath is not None:
             self.my_filepath = filepath
@@ -39,7 +42,9 @@ class Recipe:
         #let's use Markdown
         string_builder = []
         string_builder.append(f"# {self.title}")
-        #TODO: metadata?
+        
+        for key, val in self.metadata.items():
+            string_builder.append(f" - {key}: {val}")
 
         string_builder.append(f"\n## Ingredients")
         for ingr, amt in self.ingredients.items():
@@ -47,7 +52,7 @@ class Recipe:
         
         string_builder.append(f"\n## Instructions")
         for step_num,  step in enumerate(self.steps):
-            string_builder.append(f"  {step_num+1}. step")
+            string_builder.append(f"  {step_num+1}. {step}")
         return "\n".join(string_builder)
 
     def write_json(self, filepath):
@@ -67,7 +72,8 @@ class Recipe:
             my_dict=json.load(infile)
             self.title = my_dict[self.TITLE_KEY]
             self.steps = my_dict[self.STEP_KEY]
-            self.ingredients = {ingr:IngredientAmount(*amt) for ingr, amt in my_dict[self.INGR_KEY]}
+            ingr_dict = my_dict[self.INGR_KEY]
+            self.ingredients = {ingr:IngredientAmount(*amt) for ingr, amt in ingr_dict.items()}
             self.metadata = my_dict[self.META_KEY]
 
     def scale_ingredients(self, factor:int):
@@ -157,7 +163,8 @@ class IngredientAmount:
     unit:str
 
     def __init__(self, amount:float, unit:str):
-        pass
+        self.amount = amount
+        self.unit = unit
     
     def __str__(self):
         return f"{self.amount:.2} {self.unit}"
@@ -180,11 +187,12 @@ class IngredientAmount:
         "cup":236.5875,
         "tbsp":14.7868,
         "tsp":4.92892,
-        "fl oz": 29.5735
+        "fl.oz": 29.5735
     }
 
     MASS_CONV:dict = {
-        "grams":1 , 
+        "gram":1 , 
+        "g":1 , 
         "kg":1000,
         "lbs": 453.592,
         "oz":28.3495
@@ -257,9 +265,9 @@ class IngredientAmount:
     
     def convert_metric(self):
         if self.is_mass_unit():
-            amt = self.convert_mass("g", self.unit, self.amount)
+            amt = self.convert_mass("gram", self.unit, self.amount)
             self.amount = amt
-            self.unit = "g"
+            self.unit = "gram"
         elif self.is_volume_unit():
             amt = self.convert_volume("ml", self.unit, self.amount)
             self.amount = amt

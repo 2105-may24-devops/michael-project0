@@ -1,0 +1,25 @@
+{
+    "title": "My Recipe",
+    "ingredients": {
+        "egg": [
+            1.0,
+            "egg"
+        ],
+        "water": [
+            236.5875,
+            "ml"
+        ],
+        "oil": [
+            20.0,
+            "ml"
+        ]
+    },
+    "steps": [
+        "Second Second\"",
+        "new step two"
+    ],
+    "metadata": {
+        "author": "Michael",
+        "serves": 1
+    }
+}

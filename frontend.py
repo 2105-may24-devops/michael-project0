@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 #standard library imports
 from typing import Generator
-import sys
 import os
 from pathlib import Path
 
@@ -12,6 +11,7 @@ from recipe import IngredientAmount
 class Frontend:
 
     BLEST = True
+    term = None
     #handling dependencies
     COLORS={
         "WARN":"",
@@ -23,7 +23,8 @@ class Frontend:
     def init_terminal(self):
         try:
             from blessed import Terminal
-            term = Terminal()
+            self.term = Terminal()
+            term = self.term
             self.COLORS["WARN"] = term.red
             self.COLORS["NORM"] = term.normal
             self.COLORS["PROMPT"] = term.yellow
@@ -78,14 +79,17 @@ class Frontend:
                 if char.isspace():
                     state = WHITESPACE
                     yield line[reg0:i]
+                    reg0=i+1
             elif state == SQUOTE:
                 if char == "'":
                     state = WHITESPACE
                     yield line[reg0:i]
+                    reg0 = i+1
             elif state == DQUOTE:
-                if char == "\"":
+                if char == '"':
                     state = WHITESPACE
                     yield line[reg0:i]
+                    reg0 = i+1
         yield line[reg0:]
         yield None
 
@@ -99,9 +103,9 @@ class Frontend:
         """Handles interactive mode loop"""
         def prompt(self):
             if self.RCPFLAG:
-                return f"Current Recipe:{self.COLORS['RCP_PATH']}{self.rcp_path.name} {self.COLORS['PROMPT']}#{self.COLORS['NORM']}"
+                return f"Current Recipe:{self.COLORS['RCP_PATH']}{self.rcp_path.name} {self.COLORS['PROMPT']}# {self.COLORS['NORM']}"
             else:
-                return f"{self.COLORS['RCP_PATH']}{os.getcwd()} {self.COLORS['PROMPT']}${self.COLORS['NORM']} "
+                return f"{self.COLORS['RCP_PATH']}{os.getcwd()} {self.COLORS['PROMPT']}$ {self.COLORS['NORM']} "
         #whether or not the loop should go on
         goon = True
         imp = input(prompt(self))
@@ -206,25 +210,31 @@ class Frontend:
 
     RCP_COMMANDS={
         "help":"prints all available commands",
-        "add":"add information to the recipe \t(step, recipe)",
+        "display":"prints the whole recipe as a Markdown",
+
         "get":"get some information about the recipe (metadata [key], step [i])",
+        "add":"add information to the recipe \t(step, recipe)",
         "set":"changes recipe information. (title, author, serves, srcurl)",
         "remove":"removes a step",
+
         "metric":"converts a recipe's ingredients to metric",
         "scale":"scales ingredients by a factor",
-        "save":"saves a recipe to given path, or original path if none.",
-        "display":"prints the whole recipe as a Markdown",
+
+        "save":"saves a recipe to given path, or original path if none.\t 1 optional path argument",
         "close":"closes the recipe mode, returning to file explorer"
     }
 
     def manip_recipe(self, cmd:str):
         """handles recipe manipulation, parses commands"""
+
+        COLORS = self.COLORS
         #let's copy kubectl-style commands
         #format is: action target *arguments...
         my_recipe = self.my_recipe
         RCP_COMMANDS = self.RCP_COMMANDS
         tokens = self.tokenizer(cmd)
         root = next(tokens)
+
         if root == "help":
             arg = next(tokens)
             if arg in RCP_COMMANDS:
@@ -232,37 +242,105 @@ class Frontend:
             else:
                 for cmd_name, helptxt in RCP_COMMANDS.items():
                     print(f"\t{cmd_name}\t{helptxt}")
+
+
         elif root == "display":
             #TODO: may need to change cursor on terminal
-            if self.BLEST:
-                with self.term.fullscreen():
-                    print(str(my_recipe))
-                    input("press enter to quit")
-            else:
-                print(str(self.my_recipe))
+            # if self.BLEST:
+            #     with self.term.fullscreen():
+            #         print(str(my_recipe))
+            #         input("press enter to quit")
+            # else:
+            print(str(self.my_recipe))
+
+
+        elif root == "get":
+            what = next(tokens)
+            if what == "metadata":
+                key = next(tokens)
+                keys = my_recipe.cli_get_metadata_keys()
+                if key is not None and key in keys:
+                    print("  ".join(keys))
+                    print(f"{self.COLORS['ACCENT']} To access any of the keys, type \
+                        '{self.COLORS['NORM']}get metadata [key]'.")
+                else:
+                    print(f"{key} = {my_recipe.cli_get_metadata(key)}")
+            elif what == "title":
+                print(f"{my_recipe.title}")
+            elif what == "step":
+                numnun = next(tokens)
+                steps = my_recipe.steps
+                printall = True
+                if numnun is not None:
+                    num = int(numnun)
+                    if num < len(steps) and num > 0:
+                        print(f"Step {num}. {steps[num-1]}")
+                        printall = False
+                if printall:
+                    for number, step in enumerate(steps):
+                        print(f"Step {number+1}. {step}")
+            
+            elif what == "units":
+                munit = IngredientAmount.MASS_CONV
+                vunit = IngredientAmount.VOLUME_CONV
+                print("Mass Units:")
+                for mu in munit:
+                    print(f"\t{mu}")
+                print("Volume Units:")
+                for vu in vunit:
+                    print(f"\t{vu}")
+            
+            else: 
+                print(f"{COLORS['WARN']} invalid get argument.")
+                print(f"Possible arguments for get command: ")
+                RECIPE_GET_DICT={
+                    "title":"get title of the recipe.",
+                    "metadata":"get metadata by key. If no key supplied, prints all keys available.\t 1 argument",
+                    "units":"get supported convertible units"
+                }
+                for get_cmd, help_txt in RECIPE_GET_DICT.items():
+                    print(f"{COLORS['ACCENT']}{get_cmd}\t{COLORS['NORM']}{help_txt}")
+
+
         elif root == "add":
             what = next(tokens)
             if what == "step":
-                my_step = " ".join(list(tokens)[:-1])
+                the_step = list(tokens)
+                print(the_step)
+                my_step = " ".join(the_step[:-1])
                 i = len(my_recipe.steps) + 1
-                print(f"{self.COLORS['ACCENT']}Added: {self.COLORS['NORM']} Step {i}. {my_step}")
+                print(f"{COLORS['ACCENT']}Added: {COLORS['NORM']} Step {i}. {my_step}")
                 my_recipe.cli_add_step(my_step)
+
             elif what == "ingredient":
-                munit = IngredientAmount.MASS_CONV
-                vunit = IngredientAmount.VOLUME_CONV
                 ingr = next(tokens)
                 amount = float(next(tokens))
                 unit = next(tokens)
                 my_recipe.cli_add_ingredient(ingr, amount, unit)
-                # if status == False and False:
-                #     #not going to be strict about checking units
-                #     print(f"{self.COLORS['WARN']}Invalid unit.")
-                #     print("Valid mass units:")
-                #     for mu in munit.keys():
-                #         print(f"\t{mu}")
-                #     print("Valid volume units:")
-                #     for vu in vunit.keys():
-                #         print(f"\t{vu}")
+
+            elif what == "metadata":
+                key = next(tokens)
+                not_added = True
+                if key is not None:
+                    val = next(tokens)
+                    if val is not None:
+                        my_recipe.cli_custom_metadata(key, val)
+                        not_added = False
+                if not_added:
+                    print(f"{COLORS}No key added. Missing arguments")
+
+            else:
+                print(f"{COLORS['WARN']} invalid add argument.")
+                print(f"Possible arguments for add command: ")
+                RECIPE_ADD_DICT={
+                    "metadata":"add or set metadata by key and value.\t 2 arguments",
+                    "step":"add a step to the recipe.\t 1 or more arguments (treated as a sentence)",
+                    "ingredient":f"add an ingredient. (see '{COLORS['ACCENT']}get units{COLORS['NORM']}')\
+                        \t three arguments (what, amount, unit)"
+                }
+                for add_cmd, help_txt in RECIPE_ADD_DICT.items():
+                    print(f"{COLORS['ACCENT']}{add_cmd}\t{COLORS['NORM']}{help_txt}")
+
         elif root == "set":
             what = next(tokens)
             if what == "title":
@@ -279,12 +357,16 @@ class Frontend:
                 my_recipe.cli_set_srcurl(url)
             elif what == "metadata":
                 key = next(tokens)
+                not_added = True
                 if key is not None:
                     val = next(tokens)
                     if val is not None:
                         my_recipe.cli_custom_metadata(key, val)
+                        not_added = False
+                if not_added:
+                    print(f"{COLORS}No key added. Missing arguments")
             else:
-                print(f"{self.COLORS['WARN']} invalid set argument.")
+                print(f"{COLORS['WARN']} invalid set argument.")
                 print(f"Possible arguments for set: ")
                 RECIPE_SET_DICT={
                     "title":"set title of the recipe.\t 1 argument",
@@ -294,82 +376,64 @@ class Frontend:
                     "metadata":"custom metadata.\t 2 arguments, key then value"
                 }
                 for set_cmd, help_txt in RECIPE_SET_DICT.items():
-                    print(f"{self.COLORS['ACCENT']}{set_cmd}\t{self.COLORS['NORM']}{help_txt}")
+                    print(f"{COLORS['ACCENT']}{set_cmd}\t{COLORS['NORM']}{help_txt}")
+
+
         elif root == "remove":
             what = next(tokens)
             if what == "metadata":
                 key = next(tokens)
                 my_recipe.cli_remove_metadata(key)
+
             elif what == "step":
                 try:
                     num = int(next(tokens)) - 1
                     my_recipe.cli_remove_step(num)
-                except (IndexError, TypeError):
+                except (IndexError, ValueError):
                     print(f"{self.COLORS['WARN']} Invalid index. \
                         There are {len(my_recipe.steps)} steps in the recipe.")
+                except TypeError:
+                    my_recipe.cli_remove_step()
+            
             elif what == "ingredient":
                 ingr = next(tokens)
                 status = my_recipe.cli_remove_ingredient(ingr)
                 if status == False:
                     print("No matching ingredient found!")
-        elif root == "get":
-            what = next(tokens)
-            if what == "metadata":
-                key = next(tokens)
-                keys = my_recipe.cli_get_metadata_keys()
-                if key is not None and key in keys:
-                    print("  ".join(keys))
-                    print(f"{self.COLORS['ACCENT']} To access any of the keys, type \
-                        '{self.COLORS['NORM']}get metadata [key]'.")
-                else:
-                    print(f"{key} = {my_recipe.cli_get_metadata(key)}")
-                #TODO:
-            elif what == "step":
-                num = int(next(tokens))
+            else: 
+                print(f"{self.COLORS['WARN']} invalid remove argument.")
+                print(f"Possible arguments for remove command: ")
+                RECIPE_RMV_DICT={
+                    "step":"remove the last step, or the specified step number.\t 0 or 1 arguments",
+                    "ingredient":"remove an ingredient by the name of the ingredient.\t 1 argument",
+                    "metadata":"remove a key value pair by the key.\t 1 arguments"
+                }
+                for rmv_cmd, help_txt in RECIPE_RMV_DICT.items():
+                    print(f"{COLORS['ACCENT']}{rmv_cmd}\t{COLORS['NORM']}{help_txt}")
+
+
         elif root == "save":
             target = next(tokens)
             if target is not None:
                 my_recipe.write_json(target)
             else:
                 my_recipe.write_json(self.rcp_path)
+            my_recipe.modified=False
+
         elif root == "close":
             self.close_recipe()
+
         else:
             if root == "metric":
                 ingr = next(tokens)
                 my_recipe.cli_to_metric(ingr)
+
             elif root == "scale":
                 factor = float(next(tokens))
                 my_recipe.cli_scale(factor)
+
             else:
                 print(f"{self.COLORS['WARN']}Command not recognized. enter \
                     '{self.COLORS['NORM']}help{self.COLORS['WARN']}' to see available commands")
         return True
-
-# main function commented just for exercise
-def main():
-    """
-    env vars (home, mode/state) (local settings file?)
-    file navigation mode (cd ls pwd)
-    help
-    recipe editing mode
-        create recipe
-        edit steps
-        scale recipe
-        optional feature: tab autocomplete?
-        stretch feature: treeNode-based recipes
-    """
-    my_frontend = Frontend()
-    my_frontend.init_settings()
-    my_frontend.init_terminal()
-    if len(sys.argv) > 1:
-        script_path = Path(sys.argv[1])
-        if script_path.exists():
-            my_frontend.script_mode(script_path)
-        else: 
-            pass
-    else:
-        my_frontend.console_mode()
-
-if __name__ == "__main__":
-    main()
+    #end class
