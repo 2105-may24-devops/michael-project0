@@ -10,3 +10,5 @@ all:
       vars:
         ansible_ssh_private_key_file: ~/.ssh/2105-may24-devops-ubuntu-vm-1_key.pem
         ansible_user: michael
+        #not sure if i want to specify the path here... Should be more robust here.
+        ansible_python_interpreter: /usr/bin/python3

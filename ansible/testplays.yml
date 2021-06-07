@@ -1,0 +1,27 @@
+---
+- name: test the python program
+  hosts: revature2
+  tasks:
+  - name: pip install requirements into venv
+    pip:
+      requirements: ~/mdtest/requirements.txt
+      virtualenv: ~/mdtest/venv/
+  
+
+      
+
+# - name: Use SCP to copy code to hosts
+# #pattern match to individual hosts or groups.
+#   hosts: revature
+#   vars:
+#     user: michael
+#   tasks:
+#     - name: make a directory to work in.
+#       file:
+#         path: ~/ansible_MD_sandbox/
+#         owner: "{{ user }}"
+
+#     - name: Copy python files to destination.
+#       copy:
+#         src: "{{my_source}}"
+#         dest: 

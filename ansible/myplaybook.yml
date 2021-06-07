@@ -1,37 +1,58 @@
 ---
 #start a playbook with three dashes, (optionally) end with three dots
 #optional, human-readable name.
-- name: ping to check server's status
+vars:
+  testpath: mdtest
+
+- name: ping to check host status
 #pattern match to individual hosts or groups.
   hosts: revature
   tasks:
     - name: human readable name of task. this task will ping.
       ping:
 
-- name: installation
-#pattern match to individual hosts or groups.
+- name: installing the base requirements (python pip venv and git)
   hosts: revature
   tasks:
-    - name: human readable name of task. this task will ping.
-      ping:
+    - name: installing python3
+      package:
+        name: python3
+        state: present
+    - name: installing python3-pip
+      package:
+        name: python3-pip
+        state: present
+    - name: installing venv
+      package:
+        name: python3-venv
+    - name: installing git
+      package:
+        name: git
+        state: present
 
-
-- name: Use SCP to copy code to hosts
-#pattern match to individual hosts or groups.
-  hosts: revature
-  vars:
-    user: michael
+- name: use git to get application code.
+  hosts: revature2
   tasks:
-    - name: make a directory to work in.
-      file:
-        path: ~/ansible_MD_sandbox/
-        owner: "{{ user }}"
+  - name: create the folder for the repo
+    file: 
+      path: ~/mdtest/
+      state: directory
+  - name: git clone my repo
+    ansible.builtin.git:
+      repo: https://github.com/2105-may24-devops/michael-project0.git
+      dest: ~/mdtest/
+      single_branch: yes
+      version: main
 
-    - name: Copy python files to destination.
-      copy:
-        src: "{{my_source}}"
-        dest: 
-  
-    
+- name: install dependencies from requirements.txt
+  hosts: revature2
+  tasks:
+  - name: pip install requirements into venv
+    pip:
+      requirements: ~/mdtest/requirements.txt
+
+- name: build test files/config files.
+
+- name: use bash, test your program.
 
 ...
