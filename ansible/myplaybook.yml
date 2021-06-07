@@ -1,0 +1,37 @@
+---
+#start a playbook with three dashes, (optionally) end with three dots
+#optional, human-readable name.
+- name: ping to check server's status
+#pattern match to individual hosts or groups.
+  hosts: revature
+  tasks:
+    - name: human readable name of task. this task will ping.
+      ping:
+
+- name: installation
+#pattern match to individual hosts or groups.
+  hosts: revature
+  tasks:
+    - name: human readable name of task. this task will ping.
+      ping:
+
+
+- name: Use SCP to copy code to hosts
+#pattern match to individual hosts or groups.
+  hosts: revature
+  vars:
+    user: michael
+  tasks:
+    - name: make a directory to work in.
+      file:
+        path: ~/ansible_MD_sandbox/
+        owner: "{{ user }}"
+
+    - name: Copy python files to destination.
+      copy:
+        src: "{{my_source}}"
+        dest: 
+  
+    
+
+...
