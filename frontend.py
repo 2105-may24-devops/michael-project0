@@ -20,7 +20,7 @@ class Frontend:
         "OS_PATH":"",
         "RCP_PATH":""
     }
-    def init_terminal(self):
+    def init_terminal(self, bless:bool):
         try:
             from blessed import Terminal
             self.term = Terminal()
