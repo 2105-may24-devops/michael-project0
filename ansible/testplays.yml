@@ -1,13 +1,25 @@
 ---
-- name: test the python program
+- name: use git to get application code.
+  vars:
+    base_path: ~/mdtest2/
+  hosts: revature2
+  tasks:
+  - name: git clone my repo. 
+    #repo contents will end up in the folder specified by the dest, not as a subfolder.
+    ansible.builtin.git:
+      repo: https://github.com/2105-may24-devops/michael-project0.git
+      dest: "{{ base_path }}"
+      single_branch: yes
+      version: main
+
+- name: install dependencies from requirements.txt
   hosts: revature2
   tasks:
   - name: pip install requirements into venv
     pip:
-      requirements: ~/mdtest/requirements.txt
-      virtualenv: ~/mdtest/venv/
-  
-
+      requirements: "{{ base_path }}requirements.txt"
+      virtualenv: "{{ base_path }}venv"
+      virtualenv_command: python3 -m venv
       
 
 # - name: Use SCP to copy code to hosts
