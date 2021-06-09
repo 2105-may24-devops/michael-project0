@@ -1,0 +1,35 @@
+---
+- name: ping and install prerequisites
+  hosts: revature
+  tasks:
+    - name: ping server
+      ping:
+    - name: installing packages using a loop.
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - python3
+        - python3-pip
+        - python3-venv
+        - git
+  when: ansible_facts['os_family'] != "Windows"
+  #well, gonna give up on windows for now.
+
+- name: deploy application using git, and set up venv dependencies
+  hosts: revature
+  vars:
+    base_path: mdtest
+  tasks:
+  - name: git clone my repo
+    ansible.builtin.git:
+      repo: https://github.com/2105-may24-devops/michael-project0.git
+      dest: ~/{{ base_path }}/
+      single_branch: yes
+      version: main
+  - name: pip install requirements into venv
+    pip:
+      requirements: ~/{{ base_path }}/requirements.txt
+      virtualenv: ~/{{ base_path }}/venv
+      virtualenv_command: python -m venv
+...

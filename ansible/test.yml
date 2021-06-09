@@ -1,0 +1,22 @@
+---
+- name: build test files/config files, then test the code
+  hosts: revature
+  vars: 
+    base_path: mdtest
+  tasks: 
+  - name: Copy necessary test files to destination
+    copy: 
+      src: ./tests/
+      dest: ~/{{ base_path }}/tests/
+  - name: Run script in control node
+    script: 
+      cmd: ./testscript.sh
+      chdir: ~/{{ base_path }}/
+  - name: fetch files from the remote
+    fetch:
+      src: ~/{{ base_path }}/tests/{{ item }}
+      dest: ./results-{{ ansible_hostname }}-{{ ansible_date_time['epoch'] }}/
+      flat: yes
+    with_fileglob:
+      - ~/{{ base_path }}/tests/*      
+...

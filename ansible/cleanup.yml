@@ -1,0 +1,11 @@
+---
+- name: cleanup by deleting base folder
+  vars:
+    base_path: mdtest
+  hosts: revature
+  tasks:
+  - name: delete the whole folder
+    file:
+      path: ~/{{ base_path }}/
+      state: absent
+...
