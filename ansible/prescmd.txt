@@ -1,13 +1,32 @@
-Show Ansible Playbooks (setup, test, cleanup)
+Hello everyone, my name is Michael, and my project is a recipe manager written in python. 
+It allows you to create, edit and save recipes, as well as scale the recipe's ingredients so that someone cooking doesn't have to do mental math on the fly.
 
+I will be running three ansible playbooks to automate the deployment, testing and uninstallation of my program.
+
+First, I will run the setup playbook, which will deploy my program.	
 ansible-playbook -i inv.yaml setup.yml 
-ansible-playbook -i inv.yaml test.yml --extra-vars "base_path=mdtest2"
+
+ansible-playbook -i inv.yaml test.yml
+I wrote a bash script, that will run the program with a given set of inputs. The program will then output three files, which will the bash script will check against an answer key
 
 ssh and show VM
-break an answer, then redo the test.
-ansible-playbook -i inv.yaml test.yml --extra-vars "forza=no"
+./venv/bin/python3 app.py
+open test1.json
+display
+scale 2
+display 
+metric
+display
+close : yes
+exit
 
-Clean up
+In order to clean up and uninstall he yml file, we can use the cleanup playbook
 ansible-playbook -i inv.yaml cleanup.yml 
 
+With that, I have shown how ansible is a flexible way to automate the deployment, testing and also uninstallation of my recipe manager.
+
+Thank you.
+
+break an answer, then redo the test.
+ansible-playbook -i inv.yaml test.yml --extra-vars "forza=no"
 --extra-vars "base_path=mdtest2"

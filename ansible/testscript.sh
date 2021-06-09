@@ -3,9 +3,9 @@
 
 for i in 1 2 3; do
   if cmp -s "test$i.json" "tests/answer$i.json"; then
-    echo "Passed test $i!" > tests/log.txt
+    echo "Passed test $i!" >> tests/log.txt
   else
-    echo "Failed test $i!" > tests/log.txt
+    echo "Failed test $i!" >> tests/log.txt
     echo "Failed a test! Check logs!"
   fi
 done

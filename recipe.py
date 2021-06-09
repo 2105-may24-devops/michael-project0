@@ -48,7 +48,7 @@ class Recipe:
 
         string_builder.append(f"\n## Ingredients")
         for ingr, amt in self.ingredients.items():
-            string_builder.append(f"  - {amt.amount} {amt.unit} {ingr}")
+            string_builder.append(f"  - {amt.amount:.0} {amt.unit} {ingr}")
         
         string_builder.append(f"\n## Instructions")
         for step_num,  step in enumerate(self.steps):

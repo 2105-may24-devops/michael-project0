@@ -11,7 +11,7 @@
       src: ./tests/
       dest: ~/{{ base_path }}/tests/
       force: "{{ forza }}"
-  - name: Run script in control node
+  - name: Run testing script to create 3 files and check the output
     script: 
       cmd: ./testscript.sh
       chdir: /home/{{ansible_user}}/{{ base_path }}/
@@ -21,7 +21,7 @@
       # var: script_out['stdout_lines']
       msg: '{{ fail_msg }}'
     when: fail_msg in script_out["stdout_lines"]
-  - name: fetch files from the remote
+  - name: fetch log files from the remote
     fetch:
       src: ~/{{ base_path }}/tests/log.txt
       dest: ./results/log-{{ ansible_hostname }}-{{ ansible_date_time['epoch'] }}.txt
