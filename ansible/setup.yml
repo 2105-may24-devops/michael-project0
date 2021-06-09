@@ -26,6 +26,7 @@
       single_branch: yes
       version: main
       update: yes
+      force: yes
       
   - name: pip install requirements into venv
     pip:
