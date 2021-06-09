@@ -11,12 +11,17 @@
   - name: Run script in control node
     script: 
       cmd: ./testscript.sh
-      chdir: ~/{{ base_path }}/
+      chdir: /home/{{ansible_user}}/{{ base_path }}/
+    register: script_out
+  - name: skipped debugging step, left in for future debugging
+    ansible.builtin.debug:
+      var: script_out
+    when: False
   - name: fetch files from the remote
     fetch:
-      src: ~/{{ base_path }}/tests/{{ item }}
-      dest: ./results-{{ ansible_hostname }}-{{ ansible_date_time['epoch'] }}/
+      src: ~/{{ base_path }}/tests/log.txt
+      dest: ./results/log-{{ ansible_hostname }}-{{ ansible_date_time['epoch'] }}.txt
       flat: yes
-    with_fileglob:
-      - ~/{{ base_path }}/tests/*      
+    # with_fileglob:
+    #   - ~/{{ base_path }}/tests/*
 ...

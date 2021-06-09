@@ -1,0 +1,3 @@
+ansible-playbook -i inv.yaml setup.yml --extra-vars "base_path=mdtest2"
+ansible-playbook -i inv.yaml test.yml --extra-vars "base_path=mdtest2"
+ansible-playbook -i inv.yaml cleanup.yml --extra-vars "base_path=mdtest2"
