@@ -14,15 +14,22 @@ def main():
         optional feature: tab autocomplete?
         stretch feature: treeNode-based recipes
     """
+    args = sys.argv[1:].copy()
+    bless = True
+    if ("-b" in args):
+        bless = False
+        args.remove("-b")
+
     my_frontend = Frontend()
     my_frontend.init_settings()
-    my_frontend.init_terminal()
-    if len(sys.argv) > 1:
-        script_path = pathlib.Path(sys.argv[1])
+    my_frontend.init_terminal(bless)
+
+    if len(args) > 0:
+        script_path = pathlib.Path(args[0])
         if script_path.exists():
             my_frontend.script_mode(script_path)
         else: 
-            pass
+            my_frontend.interpret_command(" ".join(args))
     else:
         my_frontend.console_mode()
 

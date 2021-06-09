@@ -167,7 +167,7 @@ class IngredientAmount:
         self.unit = unit
     
     def __str__(self):
-        return f"{self.amount:.2} {self.unit}"
+        return f"{self.amount:.2} { self.unit if self.is_convertible_unit() else '' }"
     
     #repr is for debugging, shows more decimals
     def __repr__(self):
@@ -197,6 +197,10 @@ class IngredientAmount:
         "lbs": 453.592,
         "oz":28.3495
     }
+
+    def is_convertible_unit(self, unit:str = None):
+        unit = self.unit if unit is None else unit
+        return self.is_volume_unit(unit) or self.is_mass_unit(unit)
 
     def is_volume_unit(self, unit:str = None):
         unit = self.unit if unit is None else unit

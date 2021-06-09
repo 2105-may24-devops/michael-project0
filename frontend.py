@@ -21,21 +21,22 @@ class Frontend:
         "RCP_PATH":""
     }
     def init_terminal(self, bless:bool):
-        try:
-            from blessed import Terminal
-            self.term = Terminal()
-            term = self.term
-            self.COLORS["WARN"] = term.red
-            self.COLORS["NORM"] = term.normal
-            self.COLORS["PROMPT"] = term.yellow
-            self.COLORS["OS_PATH"] = term.green
-            self.COLORS["RCP_PATH"] = term.blue
-            self.COLORS["ACCENT"] = term.blue
-            return True
-        except ModuleNotFoundError:
-            print("blessed not found")
-            self.BLEST=False
-            return False
+        if bless:
+            try:
+                from blessed import Terminal
+                self.term = Terminal()
+                term = self.term
+                self.COLORS["WARN"] = term.red
+                self.COLORS["NORM"] = term.normal
+                self.COLORS["PROMPT"] = term.yellow
+                self.COLORS["OS_PATH"] = term.green
+                self.COLORS["RCP_PATH"] = term.blue
+                self.COLORS["ACCENT"] = term.blue
+                return True
+            except ModuleNotFoundError:
+                print("blessed not found")
+                self.BLEST=False
+                return False
 
     CONFIG_REL_PATH="rcpconfig.txt"
 
@@ -128,7 +129,7 @@ class Frontend:
     def interpret_command(self, cmd:str):
         """Parses and interprets file-explorer mode commands, can enter recipe mode when open command is called"""
         COLORS = self.COLORS
-        if cmd == "":
+        if cmd.strip() == "":
             return True
 
         #allows scripts to access recipe mode commands
@@ -306,7 +307,7 @@ class Frontend:
             what = next(tokens)
             if what == "step":
                 the_step = list(tokens)
-                print(the_step)
+                # print(the_step)
                 my_step = " ".join(the_step[:-1])
                 i = len(my_recipe.steps) + 1
                 print(f"{COLORS['ACCENT']}Added: {COLORS['NORM']} Step {i}. {my_step}")
@@ -414,9 +415,12 @@ class Frontend:
 
         elif root == "save":
             target = next(tokens)
-            if target is not None:
+            print(repr(target))
+            if target is not None and target.strip() != "":
+                print("saving to specified file", target)
                 my_recipe.write_json(target)
             else:
+                print("saving to default file", str(self.rcp_path))
                 my_recipe.write_json(self.rcp_path)
             my_recipe.modified=False
 
@@ -433,7 +437,7 @@ class Frontend:
                 my_recipe.cli_scale(factor)
 
             else:
-                print(f"{self.COLORS['WARN']}Command not recognized. enter \
+                print(f"{self.COLORS['WARN']}Command {root} not recognized. enter \
                     '{self.COLORS['NORM']}help{self.COLORS['WARN']}' to see available commands")
         return True
     #end class
