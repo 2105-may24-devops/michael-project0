@@ -30,7 +30,5 @@ save test2.json
 scale 2
 save test3.json
 
-
-
 close
 
