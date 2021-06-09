@@ -4,9 +4,9 @@ It allows you to create, edit and save recipes, as well as scale the recipe's in
 I will be running three ansible playbooks to automate the deployment, testing and uninstallation of my program.
 
 First, I will run the setup playbook, which will deploy my program.	
-ansible-playbook -i inv.yaml setup.yml 
+ansible-playbook -i inv.yaml setup.yml --extra-vars "base_path=mdtest2"
 
-ansible-playbook -i inv.yaml test.yml
+ansible-playbook -i inv.yaml test.yml --extra-vars "base_path=mdtest2"
 I wrote a bash script, that will run the program with a given set of inputs. The program will then output three files, which will the bash script will check against an answer key
 
 ssh and show VM
@@ -20,10 +20,10 @@ display
 close : yes
 exit
 
-In order to clean up and uninstall he yml file, we can use the cleanup playbook
-ansible-playbook -i inv.yaml cleanup.yml 
+In order to clean up and uninstall the yml file, we can use the cleanup playbook
+ansible-playbook -i inv.yaml cleanup.yml --extra-vars "base_path=mdtest2"
 
-With that, I have shown how ansible is a flexible way to automate the deployment, testing and also uninstallation of my recipe manager.
+Future developments, more user-friendly UI and frontend, and expanded featureset
 
 Thank you.
 

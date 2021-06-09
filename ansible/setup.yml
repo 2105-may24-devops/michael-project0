@@ -7,10 +7,10 @@
         name: "{{ item }}"
         state: present
       with_items:
+        - git
         - python3
         - python3-pip
         - python3-venv
-        - git
       when: ansible_facts['os_family'] != "Windows"
       #well, gonna give up on windows for now.
 

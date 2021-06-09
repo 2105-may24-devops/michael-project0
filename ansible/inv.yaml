@@ -10,7 +10,7 @@ all:
         revature4:
           ansible_host: 13.84.166.27
         revature5:
-          ansible_host: 
+          ansible_host: 13.66.8.112
       vars:
         ansible_ssh_private_key_file: ~/.ssh/2105-may24-devops-ubuntu-vm-1_key.pem
         ansible_user: michael
