@@ -3,20 +3,24 @@
   hosts: revature
   vars: 
     base_path: mdtest
+    forza: yes
+    fail_msg: "Failed a test! Check logs!"
   tasks: 
   - name: Copy necessary test files to destination
     copy: 
       src: ./tests/
       dest: ~/{{ base_path }}/tests/
+      force: "{{ forza }}"
   - name: Run script in control node
     script: 
       cmd: ./testscript.sh
       chdir: /home/{{ansible_user}}/{{ base_path }}/
     register: script_out
-  - name: skipped debugging step, left in for future debugging
+  - name: Notify if failed a test without errors
     ansible.builtin.debug:
-      var: script_out
-    when: False
+      # var: script_out['stdout_lines']
+      msg: '{{ fail_msg }}'
+    when: fail_msg in script_out["stdout_lines"]
   - name: fetch files from the remote
     fetch:
       src: ~/{{ base_path }}/tests/log.txt

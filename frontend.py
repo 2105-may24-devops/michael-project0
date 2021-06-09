@@ -18,7 +18,8 @@ class Frontend:
         "NORM":"",
         "PROMPT":"",
         "OS_PATH":"",
-        "RCP_PATH":""
+        "RCP_PATH":"",
+        "ACCENT":""
     }
     def init_terminal(self, bless:bool):
         if bless:

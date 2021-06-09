@@ -25,6 +25,8 @@
       dest: ~/{{ base_path }}/
       single_branch: yes
       version: main
+      update: yes
+      
   - name: pip install requirements into venv
     pip:
       requirements: ~/{{ base_path }}/requirements.txt

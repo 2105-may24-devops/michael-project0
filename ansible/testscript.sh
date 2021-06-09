@@ -2,10 +2,10 @@
 ./venv/bin/python3 app.py -b rcpscript.txt
 
 for i in 1 2 3; do
-  echo hi $i
   if cmp -s "test$i.json" "tests/answer$i.json"; then
     echo "Passed test $i!" > tests/log.txt
   else
     echo "Failed test $i!" > tests/log.txt
+    echo "Failed a test! Check logs!"
   fi
 done

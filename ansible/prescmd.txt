@@ -1,3 +1,13 @@
-ansible-playbook -i inv.yaml setup.yml --extra-vars "base_path=mdtest2"
+Show Ansible Playbooks (setup, test, cleanup)
+
+ansible-playbook -i inv.yaml setup.yml 
 ansible-playbook -i inv.yaml test.yml --extra-vars "base_path=mdtest2"
-ansible-playbook -i inv.yaml cleanup.yml --extra-vars "base_path=mdtest2"
+
+ssh and show VM
+break an answer, then redo the test.
+ansible-playbook -i inv.yaml test.yml --extra-vars "forza=no"
+
+Clean up
+ansible-playbook -i inv.yaml cleanup.yml 
+
+--extra-vars "base_path=mdtest2"
