@@ -33,3 +33,10 @@ steps:
 - script: |
     bash ./ansible/testscript.sh
   displayName: 'testScript'
+
+- task: Ansible@0
+  inputs:
+    ansibleInterface: 'agentMachine'
+    playbookPathOnAgentMachine: './ansible/setup.yml'
+    inventoriesAgentMachine: 'file'
+    inventoryFileOnAgentMachine: './ansible/inv.yaml'
