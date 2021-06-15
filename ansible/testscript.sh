@@ -8,5 +8,6 @@ for i in 1 2 3; do
   else
     echo " Failed test $i!" >> tests/log.txt
     echo "Failed a test! Check logs!"
+    exit 1
   fi
 done

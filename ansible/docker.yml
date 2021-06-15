@@ -1,0 +1,4 @@
+- name: this is for docker
+  hosts: revature
+  tasks:
+   - name: docker pull from dockerhub
