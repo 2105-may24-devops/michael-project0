@@ -4,14 +4,14 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
 
 trigger:
-- main
+- azure-pipelines
 
 pool:
   vmImage: ubuntu-latest
 strategy:
   matrix:
-    Python27:
-      python.version: '2.7'
+    # Python27:
+    #   python.version: '2.7'
     Python35:
       python.version: '3.5'
     Python36:
@@ -31,6 +31,26 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    pip install pytest pytest-azurepipelines
-    pytest
-  displayName: 'pytest'
+    bash ./ansible/testscript.sh
+  displayName: 'testScript'
+
+- task: InstallSSHKey@0
+  inputs:
+    knownHostsEntry: |
+      |1|B9VdDHeu382KnQWXSNpOX/E+r18=|ufyz8+/WlJzY7NO3NTy0iU/1k44= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBBol0BBG7Ah1dEgciEgRkqJ3tnLSOPHGKJtPlhM1yeiQAl3I4OIhTvY+EzMUS4hz/TppuiG6iHxlaU1D814MWC4=
+      |1|sc43wBM0oCExRWB1SJSzG7DfRAg=|+8mClJRZyAErLdembs/zP0Yd2MM= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFAZU4nQNS6lNWqiFzoQ4pjTSmsGyxWmyoZS7pzSWooaua/yV9JDou49KuhCzZakpP/PY0WfTxbo/KrZM+ESW+Q=
+      |1|A7Pcn8TRFHZ5QRvs1DetOdVx4NY=|hALL3eeaODUmcFX8lCQqr/8K51c= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBD/ijCrZ+LcL4gEv5Y0K7/h1/QNY85jbQGXZK6SNKSAIaO2HlZsirragLXPLeZrIHWqj8idSCGf8uaU16D1xwy4=
+      |1|AfesVMJYx/WXqxxz499VZ1XUfK4=|9FIBe5kWdgCbwmCKJ6FFM59kv7k= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBB8uiPgYsAfhZo9tzfam2hbv7G1TUF4hk0jzrxO/SjLO2qBpMrlDaQvQWYZI3kdNT1xgFHFKSXcyaPElszq3tqU=
+    sshKeySecureFile: 'vm-1_key.pem'
+    addEntryToConfig: true
+    configHostAlias: 'revVM'
+    configHostname: '104.215.72.107'
+
+- task: Ansible@0
+  inputs:
+    ansibleInterface: 'agentMachine'
+    playbookPathOnAgentMachine: './ansible/setup.yml'
+    inventoriesAgentMachine: 'file'
+    inventoryFileOnAgentMachine: './ansible/inv.yaml'
+    args: 'ansible_python_interpreter=python3.9'
+    # args: 'ansible_ssh_private_key_file=vm-1_key.pem'
