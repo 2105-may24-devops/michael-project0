@@ -1,6 +1,7 @@
 ---
 - name: install prerequisites
   hosts: revature
+  become: yes
   tasks:
     - name: installing packages using a loop.
       ansible.builtin.package:
