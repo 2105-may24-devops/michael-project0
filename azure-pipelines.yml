@@ -30,9 +30,9 @@ steps:
     pip install -r requirements.txt
   displayName: 'Install dependencies'
 
-- script: |
-    bash ./ansible/testscript.sh
-  displayName: 'testScript'
+# - script: |
+#     bash ./ansible/testscript.sh
+#   displayName: 'testScript'
 
 - task: InstallSSHKey@0
   inputs:
