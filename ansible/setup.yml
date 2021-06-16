@@ -24,7 +24,7 @@
     ansible.builtin.git:
       repo: https://github.com/2105-may24-devops/michael-project0.git
       dest: ~/{{ base_path }}/
-      single_branch: yes
+      # single_branch: yes
       version: main
       update: yes
       force: yes
