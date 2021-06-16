@@ -31,7 +31,7 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    bash ./ansible/testscript.sh
+    bash ./testscript.sh
   displayName: 'testScript'
 
 - task: InstallSSHKey@0
