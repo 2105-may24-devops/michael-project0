@@ -52,5 +52,4 @@ steps:
     playbookPathOnAgentMachine: './ansible/setup.yml'
     inventoriesAgentMachine: 'file'
     inventoryFileOnAgentMachine: './ansible/inv.yaml'
-    args: '--extra-vars "ansible_python_interpreter=python3.9"'
-    # args: 'ansible_ssh_private_key_file=vm-1_key.pem'
+    # args: '--extra-vars "ansible_python_interpreter=python3.9"'
